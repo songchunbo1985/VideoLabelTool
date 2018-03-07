@@ -8,9 +8,10 @@ from operator import itemgetter, attrgetter
 import processingBar as pb
 
 wName = 'video'
-GWindowWidth = 1600
+GWindowWidth = 1800
 #GWindowHeightMargin = 300
 GWindowHeight = 800
+paceSetting = 30
 
 GframeCount = 0
 cutlist = [0]
@@ -74,7 +75,7 @@ def LoadFile(bfilename, ffilename):
 		#	i += 1	
 
 		#bff = last[:i]
-		print('last ',last)
+		#print('last ',last)
 
 	return bff
 
@@ -230,6 +231,13 @@ def WriteFramesLabel(wfilename, frameNO, label):
 	f.write(str(frameNO) + "," + str(label) + '\n')
 
 
+def pace(x):
+	global paceSetting
+	if x == 0:
+		x = 1
+	paceSetting = 121 - x
+
+
 
 def WriteBallCameraPos(bfilename, ballFrames, page):
 	if page == 0:
@@ -261,7 +269,10 @@ def WriteBallCameraPos(bfilename, ballFrames, page):
 
 def LoadVideo(vName1, vName2, vName3, wName, wfilename, bfilename):
 	global GframeCount
-
+	global colorChoice ###
+	global lcb
+	global mcb
+	global rcb
 	resultSet = []
 	print('Prepare video: ', vName1)
 	print('Prepare video: ', vName2)
@@ -282,6 +293,8 @@ def LoadVideo(vName1, vName2, vName3, wName, wfilename, bfilename):
 
 	barName1 = 'Frame'
 	cv2.createTrackbar(barName1, wName, 0, numFrames1 - 1, ctr)
+	cv2.createTrackbar('Speed:', wName, paceSetting, 120, pace)
+
 
 	canvas = makeCanvas(GWindowHeight)
 	uWidth = int((GWindowWidth - 100)/3.0)
@@ -294,8 +307,8 @@ def LoadVideo(vName1, vName2, vName3, wName, wfilename, bfilename):
 	tempG = 0
 	tempB = 0	
 
-	page = LoadFile(bfilename, wfilename)
-	
+	#page = 0#LoadFile(bfilename, wfilename)
+	page, colorChoice, lcb, mcb, rcb, resultSet = LoadRecord(bfilename)
 	if page != 0:
 		GframeCount = page
 	else:
@@ -356,25 +369,28 @@ def LoadVideo(vName1, vName2, vName3, wName, wfilename, bfilename):
 		#test end pass
 
 		canvas[200:200+uHeight1, 0:uWidth, :] = cv2.resize(frame1, (uWidth, uHeight1), interpolation = cv2.INTER_CUBIC)
-		canvas[200:200+uHeight2, uWidth + 50 : 2*uWidth + 50, :] = cv2.resize(frame2, (uWidth, uHeight2), interpolation = cv2.INTER_CUBIC)
-		canvas[200:200+uHeight3, 2*uWidth + 100 : 3*uWidth + 100, :] = cv2.resize(frame3, (uWidth, uHeight3), interpolation = cv2.INTER_CUBIC)
+		canvas[200:200+uHeight2, uWidth + 20 : 2*uWidth + 20, :] = cv2.resize(frame2, (uWidth, uHeight2), interpolation = cv2.INTER_CUBIC)
+		canvas[200:200+uHeight3, 2*uWidth + 40 : 3*uWidth + 40, :] = cv2.resize(frame3, (uWidth, uHeight3), interpolation = cv2.INTER_CUBIC)
 
 		cv2.imshow(wName, canvas)
 		cv2.setTrackbarPos(barName1, wName, fcount)
-		key = cv2.waitKey(1)		
+		key = cv2.waitKey(paceSetting)		
 
 		if key & 0xFF == ord('q'):
 			break
 		pause = UPressKey(key, pause, wfilename, bfilename, numFrames1, fcount, resultSet)
 		if not pause:
+			print(str(GframeCount), str(colorChoice), lcb, mcb, rcb)
 			resultSet.append((GframeCount, colorChoice, lcb, mcb, rcb))
-			resultSet = maintainResultSet(GframeCount, resultSet)
-
+		resultSet = maintainResultSet(GframeCount, resultSet)
+		#print(resultSet)
+		del frame1, frame2, frame3
+			#print('released.')
 		#maintainResultSet(GframeCount, resultSet)
 		#resultSet.append()
-	print('gf: ', GframeCount)
+	#print('gf: ', GframeCount)
 	#resultSet = maintainResultSet(GframeCount, resultSet)
-	print('result: ', resultSet)
+	#print('result: ', resultSet)
 
 	cap1.release()
 	cap2.release()
@@ -401,7 +417,57 @@ def KeepRecord(resultSet, bfilename):
 		else:
 			b3 = "0"	
 		f.write(str(x[0])+","+str(x[1])+","+b1+","+b2+","+b3+'\n' )
+
+
+def extractItems(line):
+	y = line.split(',')
+	#print(y)
+	return y
+
+
+#seek the last line
+#return next frame, play/break, left camera, middle camera, right camera. 
+def LoadRecord(bfilename):
+	currentF = 0
+	currentPB = 0
+	currentLC = 0
+	currentMC = 0
+	currentRC = 0
+
+	resSet = []
+
+	if os.path.isfile(bfilename):
+		f = open(bfilename, 'r')
+		line = f.read().split('\n')
+	#print('line: ', line)
+	#for item in line.split(','):
+		for item in line:
+			#print('test1 ', item)	
+			elems = item.split(',')
+			#print('test1 ', item)
+			if len(elems) == 5:
+				#print('test3 ', elems)
+				resSet.append((int(elems[0]), int(elems[1]), int(elems[2]), int(elems[3]), int(elems[4])))
+	#print('test2 ', resSet)	
+
+	if os.path.isfile(bfilename):
+		f = open(bfilename, 'r')
+		line = f.readlines()
+		#print('line: ', line[-1])
+		y = extractItems(line[-1])	
+		currentF = int(y[0])
+		currentPB = int(y[1])
+		currentLC = int(y[2])
+		currentMC = int(y[3])
+		currentRC = int(y[4])
+	else:
+		#print('empty')
+		resSet = []
+		return currentF, currentPB, currentLC, currentMC, currentRC, resSet
 	
+	#print('test ',currentF, currentPB, currentLC, currentMC, currentRC)
+	return currentF + 1, currentPB, currentLC, currentMC, currentRC, resSet
+
 
 def maintainResultSet(GframeCount, resultSet):
 	if len(resultSet) < GframeCount:
