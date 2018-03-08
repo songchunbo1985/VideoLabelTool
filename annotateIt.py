@@ -9,10 +9,12 @@ import processingBar as pb
 
 wName = 'video'
 GWindowWidth = 1800
-#GWindowHeightMargin = 300
 GWindowHeight = 800
 paceSetting = 30
 
+numFrames1 = 0
+numFrames2 = 0
+numFrames3 = 0
 GframeCount = 0
 cutlist = [0]
 colorChoice = 0
@@ -47,6 +49,7 @@ def OrganizeCutlist():
 
 
 def OrganizeBallList(currentFrame, historyList):
+	#print('hist: ', historyList)
 	i = 0
 	while i < len(historyList):
 		if currentFrame < historyList[i][0]:
@@ -55,6 +58,7 @@ def OrganizeBallList(currentFrame, historyList):
 			if currentFrame - 1 == historyList[-1][0]:
 				historyList.append((currentFrame, lcb, mcb, rcb))
 			i += 1
+	#print('hist: ', historyList)
 	return historyList
 
 
@@ -62,21 +66,7 @@ def LoadFile(bfilename, ffilename):
 	bff = 0
 	if os.path.isfile(bfilename) and os.path.isfile(ffilename):
 		with open(bfilename, 'rb') as fb:
-			#for line in fb:
-			#	pass
 			line = fb.readlines()
-		last = line
-		#last = last.decode('ascii')
-			
-		#i = 0
-		#for x in last:
-		#	if x == ",":
-		#		break
-		#	i += 1	
-
-		#bff = last[:i]
-		#print('last ',last)
-
 	return bff
 
 
@@ -84,7 +74,8 @@ def UPressKey(key, pause, wfilename, bfilename, totalFrames, page, resultSet):
 	global cutlist
 	global colorChoice
 	global colorResult
-	
+
+	global GframeCount	
 	global ballFrames
 	global lcb
 	global mcb
@@ -99,8 +90,7 @@ def UPressKey(key, pause, wfilename, bfilename, totalFrames, page, resultSet):
 	elif key & 0xFF == 32 and pause:
 		pause = False
 
-	if key & 0xFF == ord('s'):
-		#colorChoice = 0
+	elif key & 0xFF == ord('s'):
 		cutlist.append(GframeCount)
 		colorResult.append(colorChoice)
 		colorChoice = 0
@@ -109,7 +99,7 @@ def UPressKey(key, pause, wfilename, bfilename, totalFrames, page, resultSet):
 	elif GframeCount == totalFrames - 1:
 		cutlist.append(totalFrames-1)
 		colorResult.append(colorChoice)	
-	if key & 0xFF == ord('1'):
+	elif key & 0xFF == ord('1'):
 		colorChoice = 1
 	elif key & 0xFF == ord('2'):
 		colorChoice = 2
@@ -117,25 +107,49 @@ def UPressKey(key, pause, wfilename, bfilename, totalFrames, page, resultSet):
 		colorChoice = 0
 
 	#ball in left camera
-	if key & 0xFF == ord('b'):
+	elif key & 0xFF == ord('b'):
 		if not lcb:
 			lcb = True
 		else:
 			lcb = False
 
 	#ball in middle camera:
-	if key & 0xFF == ord('n'):
+	elif key & 0xFF == ord('n'):
 		if not mcb:
 			mcb = True
 		else:
 			mcb = False
 
 	#ball in right camera
-	if key & 0xFF == ord('m'):
+	elif key & 0xFF == ord('m'):
 		if not rcb:
 			rcb = True
 		else:
 			rcb = False
+
+
+	elif key & 0xFF == 43:
+		if GframeCount < numFrames1-100 and GframeCount < numFrames2-100 and GframeCount < numFrames3-100:
+			GframeCount += 100
+		else:
+			GframeCount = min(numFrames1-1, numFrames2-1, numFrames3-1)
+	elif key & 0xFF == 45:
+		if GframeCount > 50:
+			GframeCount -= 50
+		else:
+			GframeCount = 0
+	elif key & 0xFF == 46:
+		if GframeCount < numFrames1-500 and GframeCount < numFrames2-500 and GframeCount < numFrames3-500:
+			GframeCount += 500
+		else:
+			GframeCount = min(numFrames1-1, numFrames2-1, numFrames3-1)
+	elif key & 0xFF == 47:
+		if GframeCount > 200:
+			GframeCount -= 200
+		else:
+			GframeCount = 0
+
+
 
 	if not pause:
 		if len(ballFrames) == 0:
@@ -145,26 +159,13 @@ def UPressKey(key, pause, wfilename, bfilename, totalFrames, page, resultSet):
 			while jj <= GframeCount:
 				ballFrames.append((jj, lcb, mcb, rcb))
 				jj += 1
-		#ballFrames.append((GframeCount, lcb, mcb, rcb))
 
+	#print('b1 ', ballFrames)
 	ballFrames = OrganizeBallList(GframeCount, ballFrames)
-	#pb.PickColor(ballFrames)
+	#print('b2 ', resultSet)
 	i = 0
 	if writeFlag:
 		KeepRecord(resultSet, bfilename)
-		#i = page
-		#while i < len(cutlist) - 1:
-		#	j = cutlist[i]
-		#	while j < cutlist[i+1] or j == cutlist[-1]:
-		#		WriteFramesLabel(wfilename, j, colorResult[i])
-		#		j += 1
-		#	i += 1	
-		#k = cutlist[-1]
-		#while k <= GframeCount:
-		#	WriteFramesLabel(wfilename, k, colorChoice)		
-		#	k += 1
-
-		#WriteBallCameraPos(bfilename, ballFrames, page)
 		writeFlag = False	
 
 	return pause
@@ -172,25 +173,12 @@ def UPressKey(key, pause, wfilename, bfilename, totalFrames, page, resultSet):
 
 
 def PickColor(colorChoice):
-	#print('test ', colorChoice) pass
-	#print('test ', ColorSet[colorChoice]) pass
 	return ColorSet[colorChoice]
 
 
 def ctr(x):
 	global GframeCount
 	global ballFrames
-#	if x > ballFrames[-1][0]:
-#		i = ballFrames[-1][0]
-#		t = ballFrames[-1]
-#		while i <= x:
-#			ballFrames.append(t)
-#			i += 1
-#	elif x < ballFrames[-1][0]:
-#		i = ballFrames[-1][0]
-#		while i > x:
-#			del ballFrames[-1]
-#			i -= 1
 
 	if x != GframeCount:
 		GframeCount = x
@@ -245,7 +233,6 @@ def WriteBallCameraPos(bfilename, ballFrames, page):
 	else:
 		f = open(bfilename, 'a')
 	idx = page
-	#for b in ballFrames:
 	while idx < len(ballFrames):
 		b1 = 0
 		b2 = 0
@@ -268,6 +255,9 @@ def WriteBallCameraPos(bfilename, ballFrames, page):
 
 
 def LoadVideo(vName1, vName2, vName3, wName, wfilename, bfilename):
+	global numFrames1
+	global numFrames2
+	global numFrames3
 	global GframeCount
 	global colorChoice ###
 	global lcb
@@ -286,6 +276,10 @@ def LoadVideo(vName1, vName2, vName3, wName, wfilename, bfilename):
 	numFrames1 = getVideoLength(cap1)
 	numFrames2 = getVideoLength(cap2)
 	numFrames3 = getVideoLength(cap3)
+
+	print('Frame1: ', numFrames1)
+	print('Frame2: ', numFrames2)
+	print('Frame3: ', numFrames3)
 
 	fps1 = getFPS(cap1)
 	fps2 = getFPS(cap2)
@@ -307,7 +301,6 @@ def LoadVideo(vName1, vName2, vName3, wName, wfilename, bfilename):
 	tempG = 0
 	tempB = 0	
 
-	#page = 0#LoadFile(bfilename, wfilename)
 	page, colorChoice, lcb, mcb, rcb, resultSet = LoadRecord(bfilename)
 	if page != 0:
 		GframeCount = page
@@ -315,23 +308,17 @@ def LoadVideo(vName1, vName2, vName3, wName, wfilename, bfilename):
 		GframeCount = 0
 
 	while(cap1.isOpened() and cap2.isOpened() and cap3.isOpened()):
-		#global GframeCount
 
 		if pause:
 			cap1.set(1, GframeCount)
 			cap2.set(1, GframeCount)
 			cap3.set(1, GframeCount)
-			#trackFrameTimer = fcount
 			fcount = GframeCount
-			#GframeCount = fcount
 		else:
-			#trackFrameTimer = fcount - 1
 			fcount = GframeCount
 			cap1.set(1, fcount)
 			cap2.set(1, fcount)
 			cap3.set(1, fcount)
-			#GframeCount = fcount
-			#print('frame: ', GframeCount)
 			fcount += 1
 
 		if GframeCount == numFrames1 - 1:
@@ -380,18 +367,14 @@ def LoadVideo(vName1, vName2, vName3, wName, wfilename, bfilename):
 			break
 		pause = UPressKey(key, pause, wfilename, bfilename, numFrames1, fcount, resultSet)
 		if not pause:
-			print(str(GframeCount), str(colorChoice), lcb, mcb, rcb)
+			#print(str(GframeCount), str(colorChoice), lcb, mcb, rcb)
+			#print('result1 ', resultSet)
 			resultSet.append((GframeCount, colorChoice, lcb, mcb, rcb))
+			#print('result2 ', resultSet)
 		resultSet = maintainResultSet(GframeCount, resultSet)
-		#print(resultSet)
 		del frame1, frame2, frame3
-			#print('released.')
-		#maintainResultSet(GframeCount, resultSet)
-		#resultSet.append()
-	#print('gf: ', GframeCount)
-	#resultSet = maintainResultSet(GframeCount, resultSet)
-	#print('result: ', resultSet)
 
+	#print('resultSet ', resultSet)
 	cap1.release()
 	cap2.release()
 	cap3.release()	
@@ -421,7 +404,6 @@ def KeepRecord(resultSet, bfilename):
 
 def extractItems(line):
 	y = line.split(',')
-	#print(y)
 	return y
 
 
@@ -439,21 +421,14 @@ def LoadRecord(bfilename):
 	if os.path.isfile(bfilename):
 		f = open(bfilename, 'r')
 		line = f.read().split('\n')
-	#print('line: ', line)
-	#for item in line.split(','):
 		for item in line:
-			#print('test1 ', item)	
 			elems = item.split(',')
-			#print('test1 ', item)
 			if len(elems) == 5:
-				#print('test3 ', elems)
 				resSet.append((int(elems[0]), int(elems[1]), int(elems[2]), int(elems[3]), int(elems[4])))
-	#print('test2 ', resSet)	
 
 	if os.path.isfile(bfilename):
 		f = open(bfilename, 'r')
 		line = f.readlines()
-		#print('line: ', line[-1])
 		y = extractItems(line[-1])	
 		currentF = int(y[0])
 		currentPB = int(y[1])
@@ -461,16 +436,14 @@ def LoadRecord(bfilename):
 		currentMC = int(y[3])
 		currentRC = int(y[4])
 	else:
-		#print('empty')
 		resSet = []
 		return currentF, currentPB, currentLC, currentMC, currentRC, resSet
 	
-	#print('test ',currentF, currentPB, currentLC, currentMC, currentRC)
 	return currentF + 1, currentPB, currentLC, currentMC, currentRC, resSet
 
 
 def maintainResultSet(GframeCount, resultSet):
-	if len(resultSet) < GframeCount:
+	if len(resultSet) < GframeCount and len(resultSet) != 0:
 		tc = resultSet[-1][1]
 		tlb = resultSet[-1][2]
 		tmb = resultSet[-1][3]
@@ -485,12 +458,14 @@ def maintainResultSet(GframeCount, resultSet):
 		return resultSet
 	elif len(resultSet) > GframeCount:
 		fcs = 0
-
 		while fcs < len(resultSet):
 			if (fcs > GframeCount):
 				del resultSet[fcs]
 			else:
 				fcs+=1
+		return resultSet
+	elif len(resultSet) == 0:
+		resultSet.append((0,colorChoice,lcb,mcb,rcb))
 		return resultSet
 	else:
 		return resultSet
@@ -500,8 +475,6 @@ def main(argv):
 	cv2.namedWindow(wName, cv2.WINDOW_AUTOSIZE)
 
 	LoadVideo(argv[0], argv[1], argv[2], wName, argv[3], argv[4])
-	#print('test4: ', ballFrames)
-	#WriteBallCameraPos(argv[4], ballFrames)
 
 
 if __name__ == '__main__':
