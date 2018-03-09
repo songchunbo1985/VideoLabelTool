@@ -8,9 +8,10 @@ from operator import itemgetter, attrgetter
 import processingBar as pb
 
 wName = 'video'
-GWindowWidth = 1800
+GWindowWidth = 2050
+#GWindowHeightMargin = 300
 GWindowHeight = 800
-paceSetting = 30
+paceSetting = 120
 
 numFrames1 = 0
 numFrames2 = 0
@@ -139,13 +140,13 @@ def UPressKey(key, pause, wfilename, bfilename, totalFrames, page, resultSet):
 		else:
 			GframeCount = 0
 	elif key & 0xFF == 46:
-		if GframeCount < numFrames1-500 and GframeCount < numFrames2-500 and GframeCount < numFrames3-500:
-			GframeCount += 500
+		if GframeCount < numFrames1-20 and GframeCount < numFrames2-20 and GframeCount < numFrames3-20:
+			GframeCount += 20
 		else:
 			GframeCount = min(numFrames1-1, numFrames2-1, numFrames3-1)
 	elif key & 0xFF == 47:
-		if GframeCount > 200:
-			GframeCount -= 200
+		if GframeCount > 10:
+			GframeCount -= 10
 		else:
 			GframeCount = 0
 
@@ -367,7 +368,7 @@ def LoadVideo(vName1, vName2, vName3, wName, wfilename, bfilename):
 			break
 		pause = UPressKey(key, pause, wfilename, bfilename, numFrames1, fcount, resultSet)
 		if not pause:
-			#print(str(GframeCount), str(colorChoice), lcb, mcb, rcb)
+			print(str(GframeCount), str(colorChoice), lcb, mcb, rcb)
 			#print('result1 ', resultSet)
 			resultSet.append((GframeCount, colorChoice, lcb, mcb, rcb))
 			#print('result2 ', resultSet)
