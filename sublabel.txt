@@ -1,0 +1,7 @@
+Kick Off
+Free Kick
+Penalty
+Throwing
+Corner
+Goal Kick
+Dropped Ball

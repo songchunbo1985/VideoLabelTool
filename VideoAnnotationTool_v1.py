@@ -19,7 +19,7 @@ def LoadLabelsFromFile(filename):
 	f = open(filename,"r")
 	content = f.readlines()
 	dictLabel = {}
-	ID = 0
+	ID = 1
 	for x in enumerate(content):
 		length = len(x[1])
 		if length != 1 and x[1][length-1] == '\n':
@@ -61,21 +61,23 @@ def getVideoLength(cap):
 
 def main(argv):
 	print('Start Working...')
-	LabelID = LoadLabelsFromFile(argv[-1])
+	LabelID = LoadLabelsFromFile(argv[-3])
+	SubLabelID = LoadLabelsFromFile(argv[-2])
 	cv2.namedWindow(winName, cv2.WINDOW_AUTOSIZE)
 	
 	caps = []
-	for v in argv[:-2]:
+	for v in argv[:-4]:
 		caps.append(LoadVideo(v))
-
 	
-	recordsList = ReadAllRecordsIntoList(argv[-2])
-	#print('records ', recordsList[-1][0])
+	recordsList = ReadAllRecordsIntoList(argv[-4])
 	start = 0
 	if len(recordsList) != 0:
 		start = recordsList[-1][0] + 1
 
-	canvas = Canvas(2150, 900, caps, 30, 2, winName, LabelID)
+
+	updateFramesFlag = False
+
+	canvas = Canvas(2150, 900, caps, 30, 2, winName, LabelID, SubLabelID, updateFramesFlag)
 	canvas.DumpRecordsToFrames(recordsList)
 	canvas.LoadVideos()
 	test = canvas.GetFrames()
@@ -87,7 +89,10 @@ def main(argv):
 	#	recordsList.append(tuplet)
 	#	start+=1
 	recordsList = canvas.ConvertFramesToSimpleList()
-	WriteToFile(recordsList, argv[-2])
+	if updateFramesFlag:
+		WriteToFile(recordsList, argv[-4], updateFramesFlag)
+	else:
+		WriteToFile(recordsList, argv[-1], updateFramesFlag)
 
 
 if __name__ == '__main__':

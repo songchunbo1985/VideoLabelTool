@@ -8,6 +8,13 @@ class Frame:
 		self.lc = False
 		self.mc = False
 		self.rc = False
+		self.breakType = 0 # 0 is undefined type of break
+
+	def getBreakType(self):
+		return self.breakType
+
+	def setBreakType(self, bType):
+		self.breakType = bType
 
 	def getNum(self):
 		return self.num
@@ -41,3 +48,6 @@ class Frame:
 
 	def constructTuple(self):
 		return (self.num, self.ID, self.lc, self.mc, self.rc)
+
+	def constructTotalResult(self):
+		return (self.num, self.ID, self.lc, self.mc, self.rc, self.breakType)

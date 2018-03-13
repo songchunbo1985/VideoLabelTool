@@ -20,10 +20,13 @@ def ReadAllRecordsIntoList(filename):
 	return recordsList
 
 
-def WriteToFile(recordsList, filename):
+def WriteToFile(recordsList, filename, updateFlag):
 	f = open(filename, 'w')
 	for x in recordsList:
-		f.write(str(x[0]) + "," + str(x[1]) + "," + str(int(x[2])) + "," + str(int(x[3])) + "," + str(int(x[4])) + '\n')
+		if updateFlag:
+			f.write(str(x[0]) + "," + str(x[1]) + "," + str(int(x[2])) + "," + str(int(x[3])) + "," + str(int(x[4])) + '\n')
+		else:
+			f.write(str(x[0]) + "," + str(x[1]) + "," + str(int(x[2])) + "," + str(int(x[3])) + "," + str(int(x[4])) + "," + str(x[5]) + '\n')
 
 
 
